@@ -1536,7 +1536,16 @@ async function dl() {
   try {
     const { Document, Packer, Paragraph, TextRun, AlignmentType,
             HeadingLevel, BorderStyle, TableRow, TableCell, Table,
-            WidthType, ShadingType } = docx;
+            WidthType, ShadingType, LevelFormat } = docx;
+
+    // A4 content width with 1701 left + 1440 right margin = 11906 - 3141 = 8765 DXA
+    const CONTENT_W = 8765;
+    const C1 = 2629; // 30%
+    const C2 = 2629; // 30%
+    const C3 = 3507; // 40%
+    const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: 'DDDDDD' };
+    const cellBorders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+    const cellMargins = { top: 80, bottom: 80, left: 120, right: 120 };
 
     const now = new Date();
     const dateFull = now.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
@@ -1582,9 +1591,9 @@ async function dl() {
     const corrRows = (corrs || []).slice(0, 30).map(c =>
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: c.original || '', size: 18, font: 'Calibri', color: 'cc3333' })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: c.corrigido || '', size: 18, font: 'Calibri', color: '226622' })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: c.motivo || '', size: 18, font: 'Calibri', color: '888888', italics: true })] })], width: { size: 40, type: WidthType.PERCENTAGE } })
+          new TableCell({ borders: cellBorders, margins: cellMargins, width: { size: C1, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: c.original || '', size: 18, font: 'Calibri', color: 'cc3333' })] })] }),
+          new TableCell({ borders: cellBorders, margins: cellMargins, width: { size: C2, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: c.corrigido || '', size: 18, font: 'Calibri', color: '226622' })] })] }),
+          new TableCell({ borders: cellBorders, margins: cellMargins, width: { size: C3, type: WidthType.DXA }, children: [new Paragraph({ children: [new TextRun({ text: c.motivo || '', size: 18, font: 'Calibri', color: '888888', italics: true })] })] })
         ]
       })
     );
@@ -1631,16 +1640,16 @@ async function dl() {
     if (corrRows.length > 0) {
       children.push(
         secHeading('Log de Correções Automáticas'),
-        new Paragraph({ children: [new TextRun({ text: 'Original', bold: true, size: 19, font: 'Calibri', color: '444444' })], spacing: { after: 60 } }),
         new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
+          width: { size: CONTENT_W, type: WidthType.DXA },
+          columnWidths: [C1, C2, C3],
           rows: [
             new TableRow({
               tableHeader: true,
               children: [
-                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Original', bold: true, size: 18, font: 'Calibri', color: '444444' })] })], shading: { type: ShadingType.SOLID, color: 'F0F0F0' }, width: { size: 30, type: WidthType.PERCENTAGE } }),
-                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Corrigido', bold: true, size: 18, font: 'Calibri', color: '444444' })] })], shading: { type: ShadingType.SOLID, color: 'F0F0F0' }, width: { size: 30, type: WidthType.PERCENTAGE } }),
-                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Motivo', bold: true, size: 18, font: 'Calibri', color: '444444' })] })], shading: { type: ShadingType.SOLID, color: 'F0F0F0' }, width: { size: 40, type: WidthType.PERCENTAGE } })
+                new TableCell({ borders: cellBorders, margins: cellMargins, width: { size: C1, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, fill: 'F0F0F0' }, children: [new Paragraph({ children: [new TextRun({ text: 'Original', bold: true, size: 18, font: 'Calibri', color: '444444' })] })] }),
+                new TableCell({ borders: cellBorders, margins: cellMargins, width: { size: C2, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, fill: 'F0F0F0' }, children: [new Paragraph({ children: [new TextRun({ text: 'Corrigido', bold: true, size: 18, font: 'Calibri', color: '444444' })] })] }),
+                new TableCell({ borders: cellBorders, margins: cellMargins, width: { size: C3, type: WidthType.DXA }, shading: { type: ShadingType.CLEAR, fill: 'F0F0F0' }, children: [new Paragraph({ children: [new TextRun({ text: 'Motivo', bold: true, size: 18, font: 'Calibri', color: '444444' })] })] })
               ]
             }),
             ...corrRows
